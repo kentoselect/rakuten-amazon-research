@@ -25,9 +25,11 @@ if st.button("楽天で検索"):
                     "hits": 20,
                    "format": "json",
             },
-                    
+            headers={
+                "Referer": "https://rakuten-amazon-research-tygw8zohahgg2gvwwnasdf.streamlit.app/"
+            },     
             
-                timeout=15,
+            timeout=15,
             )
             if not response.ok:
                 st.error(f"楽天APIエラー（HTTP {response.status_code}）")
