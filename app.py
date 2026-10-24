@@ -17,7 +17,7 @@ if st.button("楽天で検索"):
     else:
         try:
             response = requests.get(
-                "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601",
+                "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701",
                 params={
                     "applicationId": st.secrets["RAKUTEN_APP_ID"],
                                         "accessKey": st.secrets["RAKUTEN_ACCESS_KEY"],
