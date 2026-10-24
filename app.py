@@ -43,7 +43,7 @@ if st.button("楽天で検索"):
                 rows = []
                 for entry in items:
                     item = entry.get("Item", entry)
-                    rows.append({
+                    
                         
 rows.append({
     "商品名": item.get("itemName", ""),
@@ -52,7 +52,7 @@ rows.append({
     "Amazon検索": "https://www.amazon.co.jp/s?k=" + requests.utils.quote(item.get("itemName", "")),
 })
 
-                    })
+                    
                 st.dataframe(pd.DataFrame(rows), use_container_width=True)
             else:
                 st.info("該当する商品がありません")
