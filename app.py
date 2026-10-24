@@ -40,22 +40,18 @@ if st.button("楽天で検索"):
             items = response.json().get("Items", [])
 
             if items:
-                rows = []
-                for entry in items:
-                    item = entry.get("Item", entry)
-                    
-                        
-rows.append({
-    "商品名": item.get("itemName", ""),
-    "楽天価格": item.get("itemPrice", 0),
-    "商品URL": item.get("itemUrl", ""),
-    "Amazon検索": "https://www.amazon.co.jp/s?k=" + requests.utils.quote(item.get("itemName", "")),
-})
-
-                    
-                st.dataframe(pd.DataFrame(rows), use_container_width=True)
-            else:
-                st.info("該当する商品がありません")
+           rows = []
+            for entry in items:
+                item = entry.get("Item", entry)
+                rows.append({
+                    "商品名": item.get("itemName", ""),
+                    "楽天価格": item.get("itemPrice", 0),
+                    "商品URL": item.get("itemUrl", ""),
+                    "Amazon検索": "https://www.amazon.co.jp/s?k=" + requests.utils.quote(item.get("itemName", "")),
+                })
+            st.dataframe(pd.DataFrame(rows), use_container_width=True)
+        else:
+            st.info("該当する商品がありません")
 
         except Exception as e:
             st.error(f"検索に失敗しました: {e}")
