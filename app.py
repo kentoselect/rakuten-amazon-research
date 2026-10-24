@@ -13,19 +13,20 @@ keyword = st.text_input("検索したい商品名", placeholder="例：パナソ
 if st.button("楽天で検索"):
     if not keyword.strip():
         st.warning("商品名を入力してください")
+
     else:
         try:
             response = requests.get(
                 "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601",
                 params={
                     "applicationId": st.secrets["RAKUTEN_APP_ID"],
+                                        "accessKey": st.secrets["RAKUTEN_ACCESS_KEY"],
                     "keyword": keyword,
                     "hits": 20,
-                    "format": "json",
-                },
-                headers={
-                    "Authorization": f'Bearer {st.secrets["RAKUTEN_ACCESS_KEY"]}'
-                },
+                   "format": "json",
+            },
+                    
+            
                 timeout=15,
             )
             if not response.ok:
