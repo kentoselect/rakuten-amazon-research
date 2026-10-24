@@ -26,8 +26,10 @@ if st.button("楽天で検索"):
                    "format": "json",
             },
             headers={
-                "Referer": "https://rakuten-amazon-research-tygw8zohahgg2gvwwnasdf.streamlit.app/"
-            },     
+    "Referer": "https://rakuten-amazon-research-tygw8zohahgg2gvwwnasdf.streamlit.app/",
+    "Origin": "https://rakuten-amazon-research-tygw8zohahgg2gvwwnasdf.streamlit.app",
+    "Authorization": f'Bearer {st.secrets["RAKUTEN_ACCESS_KEY"]}',
+},
             
             timeout=15,
             )
