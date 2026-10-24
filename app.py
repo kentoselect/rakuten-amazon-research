@@ -28,7 +28,10 @@ if st.button("楽天で検索"):
                 },
                 timeout=15,
             )
-            response.raise_for_status()
+            if not response.ok:
+                st.error(f"楽天APIエラー（HTTP {response.status_code}）")
+                st.code(response.text[:1500])
+                st.stop()
             items = response.json().get("Items", [])
 
             if items:
