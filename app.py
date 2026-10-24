@@ -44,9 +44,14 @@ if st.button("楽天で検索"):
                 for entry in items:
                     item = entry.get("Item", entry)
                     rows.append({
-                        "商品名": item.get("itemName", ""),
-                        "楽天価格": item.get("itemPrice", 0),
-                        "商品URL": item.get("itemUrl", ""),
+                        
+rows.append({
+    "商品名": item.get("itemName", ""),
+    "楽天価格": item.get("itemPrice", 0),
+    "商品URL": item.get("itemUrl", ""),
+    "Amazon検索": "https://www.amazon.co.jp/s?k=" + requests.utils.quote(item.get("itemName", "")),
+})
+
                     })
                 st.dataframe(pd.DataFrame(rows), use_container_width=True)
             else:
