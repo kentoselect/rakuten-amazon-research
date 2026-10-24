@@ -4,6 +4,48 @@ import pandas as pd
 st.set_page_config(page_title='楽天 × Amazon 利益リサーチ', page_icon='📊', layout='wide')
 st.title('楽天 × Amazon 利益リサーチ')
 st.caption('試作版：価格は手入力またはCSVで読み込みます。リアルタイム価格取得・自動商品照合は未接続です。')
+import requests
+
+st.subheader("楽天市場の商品検索")
+
+keyword = st.text_input("検索したい商品名", placeholder="例：パナソニック ドライヤー")
+
+if st.button("楽天で検索"):
+    if not keyword.strip():
+        st.warning("商品名を入力してください")
+    else:
+        try:
+            response = requests.get(
+                "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601",
+                params={
+                    "applicationId": st.secrets["RAKUTEN_APP_ID"],
+                    "keyword": keyword,
+                    "hits": 20,
+                    "format": "json",
+                },
+                headers={
+                    "Authorization": f'Bearer {st.secrets["RAKUTEN_ACCESS_KEY"]}'
+                },
+                timeout=15,
+            )
+            response.raise_for_status()
+            items = response.json().get("Items", [])
+
+            if items:
+                rows = []
+                for entry in items:
+                    item = entry.get("Item", entry)
+                    rows.append({
+                        "商品名": item.get("itemName", ""),
+                        "楽天価格": item.get("itemPrice", 0),
+                        "商品URL": item.get("itemUrl", ""),
+                    })
+                st.dataframe(pd.DataFrame(rows), use_container_width=True)
+            else:
+                st.info("該当する商品がありません")
+
+        except Exception as e:
+            st.error(f"検索に失敗しました: {e}")
 
 with st.sidebar:
     st.header('計算条件')
