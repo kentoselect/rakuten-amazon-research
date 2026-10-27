@@ -128,20 +128,9 @@ def render_yahoo():
         except OSError:
             st.warning("サーバーへ保存できません。CSVをダウンロードしてください。")
 
-    def check_yahoo_stock(url):
-        parsed = urlsplit(str(url))
-        if parsed.scheme != "https" or parsed.hostname not in {"auctions.yahoo.co.jp", "page.auctions.yahoo.co.jp"}:
-            return "確認エラー"
-        try:
-            response = requests.get(url, timeout=12, allow_redirects=False)
-            if response.status_code != 200:
-                return "確認エラー"
-            # Only explicit end-of-listing messages are treated as unavailable.
-            if any(marker in response.text for marker in ["このオークションは終了しています", "このオークションは取り消されました"]):
-                return "在庫なし"
-            return "確認エラー"
-        except requests.RequestException:
-            return "確認エラー"
+        def check_yahoo_stock(url):
+        from check_yahoo_stock import check_yahoo_stock as check_stock
+        return check_stock(url)
 
     st.info("サーバーの再起動でCSVが消える場合があります。CSVをダウンロードして保管してください。在庫の判定ができないページは「確認エラー」になります。")
     df = load_data()
