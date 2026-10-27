@@ -132,7 +132,14 @@ with yahoo_tab:
             y_other = st.number_input("その他費用（円）", min_value=0, value=0, step=100)
         with r:
             y_price = st.number_input("Amazon販売予定価格（円）", min_value=0, value=7000, step=100)
-            y_fee_rate = st.number_input("Amazon販売手数料率（％）", min_value=0.0, max_value=100.0, value=10.4, step=0.1)
+           y_fee_rate = st.number_input(
+    "Amazon販売手数料率（％）",
+    min_value=0.0,
+    max_value=100.0,
+    value=10.4,
+    step=0.1,
+    key="yahoo_fee_rate"
+)
         y_fee = y_price * y_fee_rate / 100
         total = y_cost + y_ship + y_other
         y_profit = y_price - total - y_fee
