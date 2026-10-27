@@ -13,6 +13,37 @@ st.title("ケントセレクト Amazonリサーチ")
 st.caption("楽天・ヤフオクからAmazon販売候補をリサーチ")
 rakuten_tab, yahoo_tab = st.tabs(["楽天 × Amazon", "ヤフオク × Amazon中古"])
 
+def check_yahoo_stock(url):
+    if not url:
+        return "URLなし"
+
+    try:
+        response = requests.get(
+            url,
+            timeout=10,
+            headers={
+                "User-Agent": "Mozilla/5.0"
+            }
+        )
+
+        if response.status_code != 200:
+            return "確認失敗"
+
+        text = response.text
+
+        sold_words = [
+            "このオークションは終了しています",
+            "オークションは終了しました",
+            "落札されました",
+        ]
+
+        if any(word in text for word in sold_words):
+            return "❌ 在庫なし"
+
+        return "✅ 在庫あり"
+
+    except Exception:
+        return "⚠️ 確認エラー"
 with rakuten_tab:
     st.header("楽天 × Amazon 利益リサーチ")
     st.subheader("楽天市場の商品検索")
