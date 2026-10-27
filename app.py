@@ -1,5 +1,5 @@
 return "確認エラー"
-    except requests.exceptions.RequestException:
+   
         return "確認エラー"
     except Exception:
         return "確認エラー"
