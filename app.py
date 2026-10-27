@@ -1,8 +1,4 @@
-return "確認エラー"
-   
-       
-    except Exception:
-        return "確認エラー"
+
 
 
 st.set_page_config(page_title="ケントセレクト Amazonリサーチ", page_icon="📊", layout="wide")
