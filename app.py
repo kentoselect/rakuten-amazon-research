@@ -7,6 +7,7 @@ from pathlib import Path
 st.set_page_config(page_title="楽天・ヤフオク × Amazon リサーチ", page_icon="📊", layout="wide")
 rakuten_tab, yahoo_tab = st.tabs(["楽天 × Amazon", "ヤフオク × Amazon・在庫管理"])
 
+
 def render_rakuten():
     st.title("楽天 × Amazon 利益リサーチ")
     st.caption("楽天市場の商品検索とAmazon検索リンク、仕入れ利益の試算。Amazon価格は手入力です。")
@@ -55,8 +56,12 @@ def render_rakuten():
                     st.dataframe(
                         pd.DataFrame(rows),
                         column_config={
-                            "楽天URL": st.column_config.LinkColumn("楽天の商品ページ", display_text="楽天を開く"),
-                            "Amazon検索": st.column_config.LinkColumn("Amazonで検索", display_text="Amazonを開く"),
+                            "楽天URL": st.column_config.LinkColumn(
+                                "楽天の商品ページ", display_text="楽天を開く"
+                            ),
+                            "Amazon検索": st.column_config.LinkColumn(
+                                "Amazonで検索", display_text="Amazonを開く"
+                            ),
                         },
                         hide_index=True,
                         use_container_width=True,
@@ -75,11 +80,23 @@ def render_rakuten():
     st.caption("Amazonの販売価格を入力して利益を試算できます。販売手数料率は商品カテゴリに合わせて変更してください。")
     col1, col2 = st.columns(2)
     with col1:
-        rakuten_price = st.number_input("楽天仕入れ価格（円）", min_value=0, value=5000, step=100)
-        amazon_price = st.number_input("Amazon販売価格（円）", min_value=0, value=7000, step=100)
+        rakuten_price = st.number_input(
+            "楽天仕入れ価格（円）", min_value=0, value=5000, step=100
+        )
+        amazon_price = st.number_input(
+            "Amazon販売価格（円）", min_value=0, value=7000, step=100
+        )
     with col2:
-        fee_percent = st.number_input("Amazon販売手数料率（％）", min_value=0.0, max_value=100.0, value=10.4, step=0.1)
-        other_cost = st.number_input("送料・その他費用（円）", min_value=0, value=500, step=100)
+        fee_percent = st.number_input(
+            "Amazon販売手数料率（％）",
+            min_value=0.0,
+            max_value=100.0,
+            value=10.4,
+            step=0.1,
+        )
+        other_cost = st.number_input(
+            "送料・その他費用（円）", min_value=0, value=500, step=100
+        )
     fee = amazon_price * fee_percent / 100
     profit = amazon_price - rakuten_price - fee - other_cost
     roi = profit / rakuten_price * 100 if rakuten_price else 0
@@ -99,11 +116,16 @@ def render_rakuten():
         except Exception as e:
             st.error(f"CSVの読み込みに失敗しました: {e}")
 
+
 def render_yahoo():
     st.title("ヤフオク × Amazon 利益・在庫管理")
     st.caption("Amazon価格は手入力。在庫確認はボタンを押した時のみ実行します。")
     DATA_PATH = Path(__file__).resolve().parent / "yahoo_inventory.csv"
-    COLUMNS = ["商品名", "ヤフオクURL", "仕入価格", "送料", "Amazon販売価格", "Amazon手数料率", "その他費用", "利益", "ROI", "在庫状況"]
+    COLUMNS = [
+        "商品名", "ヤフオクURL", "仕入価格", "送料",
+        "Amazon販売価格", "Amazon手数料率", "その他費用",
+        "利益", "ROI", "在庫状況",
+    ]
 
     def load_data():
         if "inventory_data" in st.session_state:
@@ -117,22 +139,125 @@ def render_yahoo():
 
     def save_data(data):
         data = data.copy()
-        for col in ["仕入価格", "送料", "Amazon販売価格", "Amazon手数料率", "その他費用"]:
+        for col in [
+            "仕入価格", "送料", "Amazon販売価格",
+            "Amazon手数料率", "その他費用",
+        ]:
             data[col] = pd.to_numeric(data[col], errors="coerce").fillna(0)
         cost = data["仕入価格"] + data["送料"] + data["その他費用"]
-        data["利益"] = (data["Amazon販売価格"] * (1 - data["Amazon手数料率"] / 100) - cost).round()
-        data["ROI"] = (data["利益"] / cost.replace(0, float("nan")) * 100).fillna(0).round(1)
+        data["利益"] = (
+            data["Amazon販売価格"] * (1 - data["Amazon手数料率"] / 100) - cost
+        ).round()
+        data["ROI"] = (
+            data["利益"] / cost.replace(0, float("nan")) * 100
+        ).fillna(0).round(1)
         st.session_state.inventory_data = data
         try:
             data.to_csv(DATA_PATH, index=False, encoding="utf-8-sig")
         except OSError:
             st.warning("サーバーへ保存できません。CSVをダウンロードしてください。")
 
-        def check_yahoo_stock(url): return __import__("check_yahoo_stock").check_yahoo_stock(url)
+    def check_yahoo_stock(url):
+        import json
+        import re
+        from datetime import datetime, timezone
+        from html.parser import HTMLParser
+        from urllib.parse import urlsplit
+        import requests
+
+        class PageData(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.capture = False
+                self.parts = []
+
+            def handle_starttag(self, tag, attrs):
+                if tag == "script":
+                    self.capture = dict(attrs).get("id") == "__NEXT_DATA__"
+
+            def handle_data(self, data):
+                if self.capture:
+                    self.parts.append(data)
+
+            def handle_endtag(self, tag):
+                if tag == "script":
+                    self.capture = False
+
+        parsed = urlsplit(str(url).strip())
+        hosts = {"auctions.yahoo.co.jp", "page.auctions.yahoo.co.jp"}
+        match = re.fullmatch(r"/jp/auction/([A-Za-z0-9]+)/?", parsed.path)
+        if (
+            parsed.scheme not in {"http", "https"}
+            or parsed.hostname not in hosts
+            or not match
+        ):
+            return "確認エラー"
+
+        auction_id = match.group(1)
+        target = "https://auctions.yahoo.co.jp/jp/auction/" + auction_id
+
+        try:
+            with requests.Session() as session:
+                session.headers.update({"Accept-Language": "ja,en;q=0.5"})
+                for _ in range(5):
+                    response = session.get(
+                        target, timeout=(5, 15), allow_redirects=False
+                    )
+                    if response.is_redirect:
+                        from urllib.parse import urljoin
+                        target = urljoin(
+                            target, response.headers.get("Location", "")
+                        )
+                        dest = urlsplit(target)
+                        if dest.scheme != "https" or dest.hostname not in hosts:
+                            return "確認エラー"
+                        continue
+                    break
+
+                if response.status_code != 200:
+                    return "確認エラー"
+
+            parser = PageData()
+            parser.feed(response.text)
+            data = json.loads("".join(parser.parts))
+            props = data.get("props", {})
+
+            for state in (
+                props.get("pageProps", {}).get("initialState", {}),
+                props.get("initialState", {}),
+            ):
+                item = state.get("item", {}).get("detail", {}).get("item", {})
+                if str(item.get("auctionId", "")) != auction_id:
+                    continue
+
+                status = str(item.get("status", "")).lower()
+                if status == "closed":
+                    return "在庫なし"
+
+                if status == "open":
+                    end = datetime.fromisoformat(
+                        str(item.get("endTime", "")).replace("Z", "+00:00")
+                    )
+                    if (
+                        end.tzinfo is None
+                        or end <= datetime.now(timezone.utc)
+                    ):
+                        return "確認エラー"
+                    return "在庫あり"
+
+            return "確認エラー"
+        except (
+            requests.RequestException,
+            ValueError,
+            TypeError,
+            AttributeError,
+        ):
+            return "確認エラー"
 
     st.info("サーバーの再起動でCSVが消える場合があります。CSVをダウンロードして保管してください。在庫の判定ができないページは「確認エラー」になります。")
     df = load_data()
     restore = st.file_uploader("保存済み在庫CSVを復元", type=["csv"])
+
     if restore is not None and st.button("CSVから復元"):
         try:
             imported = pd.read_csv(restore)
@@ -144,7 +269,9 @@ def render_yahoo():
                 st.success("復元しました。")
         except (ValueError, OSError):
             st.error("CSVを読み込めませんでした。")
+
     research_tab, inventory_tab = st.tabs(["利益リサーチ", "在庫管理"])
+
     with research_tab:
         name = st.text_input("商品名・型番")
         url = st.text_input("ヤフオク商品URL")
@@ -177,7 +304,7 @@ def render_yahoo():
                 min_value=0,
                 value=7000,
                 step=100,
-                )
+            )
             y_fee_rate = st.number_input(
                 "Amazon販売手数料率（%）",
                 min_value=0.0,
@@ -205,22 +332,20 @@ def render_yahoo():
             if not name.strip() or not url.strip():
                 st.warning("商品名とヤフオクURLを入力してください。")
             else:
-                row = pd.DataFrame(
-                    [
-                        {
-                            "商品名": name.strip(),
-                            "ヤフオクURL": url.strip(),
-                            "仕入価格": y_cost,
-                            "送料": y_ship,
-                            "Amazon販売価格": y_price,
-                            "Amazon手数料率": y_fee_rate,
-                            "その他費用": y_other,
-                            "利益": round(y_profit),
-                            "ROI": round(y_roi, 1),
-                            "在庫状況": check_yahoo_stock(url.strip()),
-                        }
-                    ]
-                )
+                row = pd.DataFrame([
+                    {
+                        "商品名": name.strip(),
+                        "ヤフオクURL": url.strip(),
+                        "仕入価格": y_cost,
+                        "送料": y_ship,
+                        "Amazon販売価格": y_price,
+                        "Amazon手数料率": y_fee_rate,
+                        "その他費用": y_other,
+                        "利益": round(y_profit),
+                        "ROI": round(y_roi, 1),
+                        "在庫状況": check_yahoo_stock(url.strip()),
+                    }
+                ])
                 df = pd.concat([df, row], ignore_index=True)
                 save_data(df)
                 st.success("在庫監視リストに登録しました。")
@@ -282,9 +407,9 @@ def render_yahoo():
     st.divider()
     st.info("登録したヤフオク商品URLを使って、在庫状況を自動チェックできます。")
 
+
 with rakuten_tab:
     render_rakuten()
 
 with yahoo_tab:
     render_yahoo()
-    
