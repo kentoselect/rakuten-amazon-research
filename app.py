@@ -160,7 +160,7 @@ with yahoo_tab:
                         df.at[i, "在庫状況"] = check_yahoo_stock(df.at[i, "ヤフオクURL"])
                     save_data(df)
                 st.success("ヤフオクの在庫状況を自動チェックしました。")
-                st.rerun()
+                
         if df.empty:
             st.info("登録されている商品はまだありません。")
         else:
