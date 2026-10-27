@@ -3,7 +3,69 @@ import pandas as pd
 import requests
 from urllib.parse import quote
 from pathlib import Path
+# ↓ app.py の import が並んでいるところに追加
+from bs4 import BeautifulSoup
 
+
+def check_yahoo_stock(url):
+    """ヤフオク商品ページを確認して在庫状況を判定"""
+    if not url or "auctions.yahoo.co.jp" not in url:
+        return "確認待ち"
+
+    try:
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) "
+                "AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1"
+            )
+        }
+
+        response = requests.get(
+            url,
+            headers=headers,
+            timeout=10,
+            allow_redirects=True
+        )
+
+        # 商品ページ自体が無くなっている
+        if response.status_code == 404:
+            return "在庫なし"
+
+        if response.status_code != 200:
+            return "確認待ち"
+
+        soup = BeautifulSoup(response.text, "html.parser")
+        text = soup.get_text(" ", strip=True)
+
+        # 終了・削除された商品
+        sold_words = [
+            "オークションは終了しました",
+            "このオークションは終了しています",
+            "終了したオークション",
+            "商品が見つかりません",
+            "指定された商品は存在しません",
+        ]
+
+        for word in sold_words:
+            if word in text:
+                return "在庫なし"
+
+        # 出品中と判断できる表示
+        active_words = [
+            "入札する",
+            "今すぐ落札",
+            "残り時間",
+            "現在価格",
+        ]
+
+        for word in active_words:
+            if word in text:
+                return "在庫あり"
+
+        return "確認待ち"
+
+    except requests.RequestException:
+        return "確認待ち"
 st.set_page_config(
     page_title="ケントセレクト Amazonリサーチ",
     page_icon="📊",
@@ -502,7 +564,22 @@ with yahoo_tab:
     # -----------------------------------------------------
 
     with inventory_tab:
+        if st.button(
+            "ヤフオク在庫を自動チェック",
+            use_container_width=True,
+            key="yahoo_auto_check"
+        ):
+            if yahoo_df.empty:
+                st.warning("在庫監視リストに商品がありません。")
+            else:
+                for i in yahoo_df.index:
+                    yahoo_df.at[i, "在庫状況"] = check_yahoo_stock(
+                        yahoo_df.at[i, "ヤフオクURL"]
+                    )
 
+                save_yahoo_data(yahoo_df)
+                st.success("ヤフオクの在庫状況を自動チェックしました。")
+                st.rerun()
         st.subheader("ヤフオク在庫管理")
 
         if yahoo_df.empty:
