@@ -15,7 +15,7 @@ rakuten_tab, yahoo_tab = st.tabs(["楽天 × Amazon", "ヤフオク × Amazon中
 
 def check_yahoo_stock(url):
     if not url:
-        return "URLなし"
+        return "確認エラー"
 
     try:
         response = requests.get(
@@ -27,7 +27,7 @@ def check_yahoo_stock(url):
         )
 
         if response.status_code != 200:
-            return "確認失敗"
+            return "確認エラー"
 
         text = response.text
 
@@ -38,14 +38,12 @@ def check_yahoo_stock(url):
         ]
 
         if any(word in text for word in sold_words):
-            return "❌ 在庫なし"
+            return "在庫なし"
 
-        return "✅ 在庫あり"
+        return "在庫あり"
 
     except Exception:
-        return "⚠️ 確認エラー"
-with rakuten_tab:
-    st.header("楽天 × Amazon 利益リサーチ")
+        return "確認エラー"
     st.subheader("楽天市場の商品検索")
     keyword = st.text_input("検索したい商品名", placeholder="例：Panasonic", key="rakuten_keyword")
     if st.button("楽天で検索", key="rakuten_search"):
