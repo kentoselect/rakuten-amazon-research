@@ -128,7 +128,7 @@ def render_yahoo():
         except OSError:
             st.warning("サーバーへ保存できません。CSVをダウンロードしてください。")
 
-　　    def check_yahoo_stock(url): return __import__("check_yahoo_stock").check_yahoo_stock(url)
+　　def check_yahoo_stock(url): return __import__("check_yahoo_stock").check_yahoo_stock(url)
 
     st.info("サーバーの再起動でCSVが消える場合があります。CSVをダウンロードして保管してください。在庫の判定ができないページは「確認エラー」になります。")
     df = load_data()
