@@ -7,10 +7,12 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 
 
-def check_yahoo_stock(url):
-    """ヤフオク商品ページを確認して在庫状況を判定"""
-    if not url or "auctions.yahoo.co.jp" not in url:
-        return "確認待ち"
+
+headers = { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1" }         response = requests.get(url, headers=headers, timeout=10, allow_redirects=True)         if response.status_code == 404:             return "在庫なし"         if response.status_code != 200:             return "確認待ち"
+
+soup = BeautifulSoup(response.text, "html.parser")         text = soup.get_text(" ", strip=True)         sold_words =しました", "このオークションは終了しています", "終了したオークション", "商品が見つかりません", "指定された商品は存在しません" ];         for word in sold_words:             if word in text:                 return "在庫なし" break  
+         active_words = [ "入札する", "今すぐ落札", "残り時間", "現在価格" ];         for word in active_words:             if word in text:                 return "在庫あり"  
+         return "確認待ち" except requests.RequestException:         return "確認待ち" ```
 
     try:
         headers = {
