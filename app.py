@@ -3,6 +3,9 @@ import pandas as pd
 import requests
 import json
 import re
+from urllib.parse import quote
+from pathlib import Path
+from bs4 import BeautifulSoup
 
 
 st.set_page_config(page_title="ケントセレクト Amazonリサーチ", page_icon="📊", layout="wide")
