@@ -128,7 +128,7 @@ def render_yahoo():
         except OSError:
             st.warning("サーバーへ保存できません。CSVをダウンロードしてください。")
 
-        def check_yahoo_stock(url):
+            def check_yahoo_stock(url):
         from check_yahoo_stock import check_yahoo_stock as check_stock
         return check_stock(url)
 
