@@ -1,6 +1,6 @@
 return "確認エラー"
    
-        return "確認エラー"
+       
     except Exception:
         return "確認エラー"
 
